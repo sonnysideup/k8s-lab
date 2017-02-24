@@ -15,9 +15,10 @@ spec:
     spec:
       volumes:
         - name: static-assets
+          emptyDir: {}
       containers:
         - name: web-server
-          image: drywheat/nginx-jazzhands:latest
+          image: drywheat/nginx-jazzhands:v0.0.4
           ports:
             - containerPort: 80
           volumeMounts:
@@ -33,6 +34,13 @@ spec:
               memory: 200Mi
         - name: web-app
           image: drywheat/mallarapu:latest
+#lifecycle:
+#	postStart:
+#		exec:
+#			command:
+#				- "cp"
+#				- "/sample.war"
+#				- "/app"
           ports:
             - containerPort: 8000
           volumeMounts:
