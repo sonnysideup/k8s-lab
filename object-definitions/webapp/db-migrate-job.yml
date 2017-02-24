@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ravi-db-migrate
+spec:
+  template:
+    metadata:
+      name: ravi-db-migrate
+    spec:
+      containers:
+        - name: web-app
+          image: drywheat/mallarapu:latest
+          command: ["python"]
+          args: ["manage.py", "migrate"]
+          env:
+            # NOTE What are the values "redis" and "postgres" listed here?
+            # How are they defined?
+            - name: DB_SERVICE
+              value: postgres
+            - name: DB_NAME
+              value: ravi_stack_db
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-user-pass
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: pg-user-pass
+                  key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 300m
+              memory: 200Mi
+      restartPolicy: Never

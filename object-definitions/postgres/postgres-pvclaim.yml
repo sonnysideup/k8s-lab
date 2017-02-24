@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  labels:
+    type: storage
+    tier: backend
+    purpose: postgres-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 250Mi
+  # NOTE We want to match any PV that is designated for storing postgres data
+  # by matching the following label.
+  selector:
+    matchLabels:
+      purpose: postgres-data

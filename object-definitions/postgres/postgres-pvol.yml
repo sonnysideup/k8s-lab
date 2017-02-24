@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  # NOTE You can add "namespace: my-jam" to the metadata if you want to avoid
+  # (a) having to specify the "--namespace=" flag when using `kubectl' or
+  # (b) changing the context for your operations.
+  name: postgres-pv
+  labels:
+    type: storage
+    tier: backend
+    purpose: postgres-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/var/k8-learnings/pgdata"

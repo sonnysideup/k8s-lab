@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres-db
+  labels:
+    ravi-stack-component: postgres
+    role: primary
+    tier: backend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        ravi-stack-component: postgres
+        role: primary
+        tier: backend
+    spec:
+      volumes:
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+      containers:
+        - name: postgres-db
+          image: postgres:9.6.2
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data-vol
+              mountPath: /var/lib/postgresql/data
+          env:
+            - name: POSTGRES_DB
+              value: ravi_stack_db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-user-pass
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-user-pass
+                  key: password
+          resources:
+            requests:
+              cpu: 200m
+              memory: 250Mi
+            limits:
+              cpu: 400m
+              memory: 500Mi

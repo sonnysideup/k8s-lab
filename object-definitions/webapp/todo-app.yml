@@ -1,0 +1,67 @@
+# NOTE Show people how to scale, update, debug and rollback
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: todo-app
+  labels:
+    ravi-stack-component: app
+    tier: frontend
+spec:
+  template:
+    metadata:
+      labels:
+        ravi-stack-component: app
+        tier: frontend
+    spec:
+      volumes:
+        - name: static-assets
+      containers:
+        - name: web-server
+          image: drywheat/nginx-jazzhands:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: static-assets
+              mountPath: /usr/src/app/static
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 300m
+              memory: 200Mi
+        - name: web-app
+          image: drywheat/mallarapu:latest
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: static-assets
+              mountPath: /usr/src/app/static
+          env:
+            - name: DEBUG
+              value: "false"
+            - name: REDIS_SERVICE
+              value: redis
+            - name: DB_SERVICE
+              value: postgres
+            - name: DB_NAME
+              value: ravi_stack_db
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-user-pass
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: pg-user-pass
+                  key: password
+          resources:
+            requests:
+              cpu: 250m
+              memory: 100Mi
+            limits:
+              cpu: 300m
+              memory: 200Mi
+

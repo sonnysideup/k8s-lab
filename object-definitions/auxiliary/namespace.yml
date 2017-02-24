@@ -1,0 +1,14 @@
+# NOTE the "apiVersion" and "kind" indicate the API version and resource.
+# `kubectl' takes care of building and dispatching the request.
+#
+# e.g. POST "/api/v2/namespaces/texas-fight" including the following data
+# as the body of the request (in JSON).
+#
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: texas-pride #your-choice-baby
+  labels:
+    name: texas-pride #your-choice-baby
+    scope: learning
+    environment: dev

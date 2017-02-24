@@ -1,0 +1,107 @@
+#
+# NOTE Nothing prevents us from defining several resources inside one file.
+#
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-pv
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "volatile"
+  labels:
+    type: storage
+    tier: backend
+    purpose: redis-data
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: "/tmp/redis"
+
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  annotations:
+    # NOTE You can claim storage using the "storage-class" annotation instead
+    # of a selector label.
+    volume.beta.kubernetes.io/storage-class: "volatile"
+  labels:
+    type: storage
+    tier: backend
+    purpose: redis-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-store
+  labels:
+    ravi-stack-component: redis
+    #role: master
+    tier: backend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        ravi-stack-component: redis
+        #role: master
+        tier: backend
+    spec:
+      volumes:
+        - name: data-vol
+          persistentVolumeClaim:
+            claimName: redis-pvc
+      containers:
+        - name: redis-master
+          image: redis:3.2.8
+          command: ["redis-server"]
+          args: ["--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data-vol
+              mountPath: /data
+          # NOTE Requesting physical resources helps the scheduler figure out
+          # where to assign this pod. Limiting resources prevents this pod
+          # from chewing up an entire node(s).
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 200m
+              memory: 100Mi
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  ports:
+    # NOTE You MUST specify a "name" if you expose more than 1 port. You can
+    # also optionally specify the "protocol".
+    - name: resp # REdis Serialization Protocol
+      port: 6379
+      targetPort: 6379
+  selector:
+    ravi-stack-component: redis
+    tier: backend
