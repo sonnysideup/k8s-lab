@@ -9,8 +9,8 @@ spec:
   # service from outside the cluster by requesting <NodeIP>:<NodePort>.
   type: NodePort
   ports:
-    - port: 8000
-      targetPort: 8000
+    - port: 80
+      targetPort: 80
       nodePort: 31000
   selector:
     ravi-stack-component: app

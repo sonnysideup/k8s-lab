@@ -1,4 +1,3 @@
-# NOTE Show people how to scale, update, debug and rollback
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -12,18 +11,57 @@ spec:
       labels:
         ravi-stack-component: app
         tier: frontend
+      annotations:
+        #
+        # NOTE Init containers can be used for a number of different tasks. In
+        # this case, we're using them to emulate the "--volumes-from" Docker
+        # flag during runtime.
+        #
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+            "name": "init-assets-dir",
+            "image": "drywheat/mallarapu:latest",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sh", "-c", "cp -R /usr/src/app/static/* /assets/"],
+            "volumeMounts": [
+              {
+                "name": "static-assets",
+                "mountPath": "/assets"
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "100Mi"
+              },
+              "limits": {
+                "cpu": "300m",
+                "memory": "200Mi"
+              }
+            }
+          }
+        ]'
     spec:
+      #
+      # NOTE This volumen is shared by ALL containers in this Pod, including the
+      # init containers!!!
+      #
       volumes:
         - name: static-assets
           emptyDir: {}
       containers:
+        #
+        # NOTE This is the 1 of 2 containers in this Pod. Traffic is routed to
+        # this container from the NodePort service. Nginx then serves "static"
+        # content and passes all other requests to django app.
+        #
         - name: web-server
-          image: drywheat/nginx-jazzhands:v0.0.4
+          image: drywheat/nginx-jazzhands:v0.0.5
           ports:
             - containerPort: 80
           volumeMounts:
             - name: static-assets
-              mountPath: /usr/src/app/static
+              mountPath: /assets
               readOnly: true
           resources:
             requests:
@@ -32,20 +70,15 @@ spec:
             limits:
               cpu: 300m
               memory: 200Mi
+        #
+        # NOTE This handles the meat of the requests, including reading/writing
+        # the visitor count into Redis, persisting your messages into postgres,
+        # and rendering the web form.
+        #
         - name: web-app
           image: drywheat/mallarapu:latest
-#lifecycle:
-#	postStart:
-#		exec:
-#			command:
-#				- "cp"
-#				- "/sample.war"
-#				- "/app"
           ports:
             - containerPort: 8000
-          volumeMounts:
-            - name: static-assets
-              mountPath: /usr/src/app/static
           env:
             - name: DEBUG
               value: "false"
@@ -72,4 +105,3 @@ spec:
             limits:
               cpu: 300m
               memory: 200Mi
-
